@@ -11,7 +11,15 @@ api_key = st.sidebar.text_input("Gemini API Keyを入力", type="password")
 if api_key:
     genai.configure(api_key=api_key)
     # 2026年現在、安定しているモデルを指定
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    model = # 使えるモデルの一覧から "flash" という名前が入っている最新のものを探す
+try:
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    # 'flash'が含まれるモデルを探し、なければ一番上のモデルを使う
+    target_model = next((m for m in available_models if 'flash' in m), available_models[0])
+    model = genai.GenerativeModel(target_model)
+except Exception:
+    # 万が一リスト取得に失敗したら、2.0を信じてセットする
+    model = genai.GenerativeModel('models/gemini-2.0-flash')
 
 st.title("🍳 献立お助け＆カロリー計算AI")
 st.write("冷蔵庫の写真をアップして、プロのレシピから献立を選びましょう。")
