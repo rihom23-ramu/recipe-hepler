@@ -1,22 +1,21 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
-import os
 
 # --- 設定エリア ---
 st.set_page_config(page_title="献立お助けAI", layout="centered")
 
-# サイドバーでAPIキーを入力（またはコードに直接書くことも可能）
-api_key = st.sidebar.text_input("Gemini API Keyを入力してください", type="password")
+# サイドバー設定
+api_key = st.sidebar.text_input("Gemini API Keyを入力", type="password")
 
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash') # 高速なFlashモデルを使用
+    # 2026年現在、安定しているモデルを指定
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
 
 st.title("🍳 献立お助け＆カロリー計算AI")
-st.write("冷蔵庫の中身や食材を写真に撮ってアップロードしてください。")
+st.write("冷蔵庫の写真をアップして、プロのレシピから献立を選びましょう。")
 
-# --- 画像アップロード ---
 uploaded_file = st.file_uploader("写真をアップロード...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
@@ -27,41 +26,38 @@ if uploaded_file is not None:
 
     if submit:
         if not api_key:
-            st.error("APIキーを入力してください。")
+            st.error("🔑 左側のサイドバーにAPIキーを入力してください。")
         else:
             with st.spinner('AIが献立を考案中...'):
-                # AIへの指示（プロンプト）
-                prompt = """
-                画像に写っている食材を特定し、それらを使って作れる献立を3つ提案してください。
-                
-                【条件】
-                1. 以下のサイトのレシピを参考に、またはそのテイストで提案すること：
-                   - きょうの料理 (kyounoryouri.jp)
-                   - 白ごはん.com (sirogohan.com)
-                   - 久原醤油 (kubara.jp)
-                   - 山本ゆり (ameblo.jp/syunkon)
-                   - オレンジページ (orangepage.net)
-                   - おかずのクッキング/山本ゆり (asahi.co.jp/daidokoro)
-                
-                2. 各提案には以下を含めてください：
-                   - 料理名
-                   - おおよそのカロリー（1人前）
-                   - その料理が載っていそうなサイトへの「Google検索リンク」
-                     (形式: https://www.google.com/search?q=site:[ドメイン]+[料理名])
-                   - 選んだ理由やコツ
-                
-                3. 回答は親しみやすい日本語でお願いします。
-                """
-                
-                # Geminiに画像とテキストを送る
-                response = model.generate_content([prompt, image])
-                
-                st.subheader("💡 AIからの提案")
-                st.markdown(response.text)
+                try:
+                    # AIへの指示
+                    prompt = """
+                    画像から食材を特定し、献立を3つ提案してください。
+                    参考サイト：白ごはん.com, 山本ゆり, きょうの料理, くばら, オレンジページ
+                    各提案に「料理名」「概算カロリー」「Google検索リンク」を含めてください。
+                    """
+                    
+                    # AI呼び出し実行
+                    response = model.generate_content([prompt, image])
+                    
+                    st.subheader("💡 AIからの提案")
+                    st.markdown(response.text)
+
+                except Exception as e:
+                    # --- ここでエラーを親切に解説 ---
+                    error_msg = str(e)
+                    
+                    if "404" in error_msg or "not found" in error_msg.lower():
+                        st.error("⚠️ **【モデルが見つかりません】**\nGoogle側でAIモデルの名称が変更された可能性があります。コード内の `gemini-1.5-flash` を最新の名称に更新してください。")
+                    elif "403" in error_msg or "API key" in error_msg:
+                        st.error("🔑 **【APIキーのエラー】**\n入力されたAPIキーが正しくないか、有効化されていません。Google AI Studioでキーを再確認してください。")
+                    elif "quota" in error_msg.lower() or "429" in error_msg:
+                        st.error("⏳ **【制限オーバー】**\n無料枠の利用制限に達しました。1分ほど待ってから再度ボタンを押してください。")
+                    else:
+                        st.error(f"❌ **【予期せぬエラー】**\n原因: {error_msg}\n（このメッセージをAIに伝えると解決が早まります！）")
 
 else:
     st.info("左側のサイドバーにAPIキーを入れ、ここに写真をアップしてください。")
 
-# --- フッター ---
 st.markdown("---")
-st.caption("※カロリーはAIによる概算です。正確な数値は各レシピサイトをご確認ください。")
+st.caption("※カロリーはAIによる概算です。")
