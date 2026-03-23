@@ -54,7 +54,7 @@ api_key = st.sidebar.text_input("Gemini API Key を入力", type="password")
 
 # --- メイン画面 ---
 st.title("🥗 献立お助け Cafe - 2026")
-st.write("食材や冷蔵庫の写真をアップして、コジーなカフェ風レシピを見つけましょう。")
+st.write("食材や冷蔵庫の写真をからレシピのヒントをもらっちゃお！")
 
 uploaded_file = st.file_uploader("食材や冷蔵庫の写真をアップロード...", type=["jpg", "jpeg", "png"])
 
