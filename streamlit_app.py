@@ -40,7 +40,7 @@ if uploaded_file is not None:
             
             # ユーザーが見つけた2026年最新モデルを指定
             # もしエラーが出る場合は 'models/gemini-1.5-flash' などに書き換えてください
-            model_name = 'models/gemini-1.5-flash'
+            model_name = 'models/gemini-2.5-flash'
             
             try:
                 model = genai.GenerativeModel(model_name)
