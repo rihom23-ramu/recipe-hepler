@@ -25,6 +25,11 @@ uploaded_file = st.file_uploader("写真をアップロード...", type=["jpg", 
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
+    
+    # --- 🛠️ ここを追加！ 画像を最大800pxにリサイズして軽量化 ---
+    image.thumbnail((800, 800)) 
+    # -----------------------------------------------------
+    
     st.image(image, use_container_width=True)
     
     col1, col2 = st.columns(2)
